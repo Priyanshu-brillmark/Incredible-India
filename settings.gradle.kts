@@ -22,6 +22,8 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "My Application"
+rootProject.name = "IncredibleIndia"
 
 include(":app")
+include(":shared")
+include(":desktop")

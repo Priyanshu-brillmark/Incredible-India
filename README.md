@@ -22,11 +22,14 @@ The application is built using modern Android development practices, powered by 
 ## 🛠️ Tech Stack & Architecture
 
 - **Language**: 100% Kotlin
-- **UI Toolkit**: Jetpack Compose (Material 3)
-- **Database (Persistence)**: Room SQLite DB
+- **Platforms**: Android (full app) + Desktop (Windows, macOS, Linux via Compose Desktop)
+- **UI Toolkit**: Jetpack Compose / Compose Multiplatform (Material 3)
+- **Database (Android)**: Room SQLite DB
+- **Database (Desktop)**: In-memory repository (shared module)
 - **Asynchronous Flow**: Kotlin Coroutines & StateFlow
-- **Image Loading**: Coil (with caching & crossfade)
-- **Navigation**: Jetpack Navigation Compose (Type-safe)
+- **Image Loading**: Coil (Android), Kamel (Desktop)
+- **Navigation**: Jetpack Navigation Compose (Android), custom navigation (Desktop)
+- **CI/CD**: GitHub Actions (`.github/workflows/ci.yml`)
 
 ---
 
@@ -34,9 +37,17 @@ The application is built using modern Android development practices, powered by 
 
 ### Prerequisites
 
-- **Android Studio Koala (or newer)**
+- **Android Studio Koala (or newer)** for Android development
 - **JDK 17** or higher
-- **Android SDK Platform 34** (Upside Down Cake)
+- **Android SDK Platform 34+** (for Android builds)
+
+### Project Modules
+
+| Module | Platform | Description |
+|--------|----------|-------------|
+| `app` | Android | Full-featured mobile app with Room, Firebase, and admin tools |
+| `desktop` | Windows / macOS / Linux | Compose Desktop app for reading and bookmarking blogs |
+| `shared` | JVM library | Shared models and in-memory repository used by desktop |
 
 ### Installation Steps
 
@@ -51,12 +62,57 @@ The application is built using modern Android development practices, powered by 
    - Navigate to the cloned folder and click **OK**.
    - Let Gradle sync and download dependencies.
 
-3. **Running the Application**:
+3. **Running the Android App**:
    - Connect an Android Device (with USB Debugging enabled) or start an Emulator.
    - Click the **Run** button (green play icon) in the Android Studio toolbar, or execute:
      ```bash
-     gradle assembleDebug
+     ./gradlew :app:assembleDebug
      ```
+
+4. **Running the Desktop App**:
+   ```bash
+   ./gradlew :desktop:run
+   ```
+
+5. **Building Desktop Installers**:
+   ```bash
+   ./gradlew :desktop:packageDistributionForCurrentOS
+   ```
+   Installers are generated under `desktop/build/compose/binaries/main-release/`.
+
+---
+
+## 🔧 Building on GitHub
+
+This repository includes a GitHub Actions workflow at `.github/workflows/ci.yml` that:
+
+- Runs Android unit tests and builds a debug APK on every push/PR
+- Builds the desktop distribution for the current OS
+- Optionally builds a signed release APK when signing secrets are configured
+
+### Required GitHub Secrets (optional, for release APK)
+
+| Secret | Description |
+|--------|-------------|
+| `KEYSTORE_BASE64` | Base64-encoded upload keystore (`.jks`) |
+| `STORE_PASSWORD` | Keystore password |
+| `KEY_PASSWORD` | Key alias password |
+
+### Local Build Commands
+
+```bash
+# Android debug APK
+./gradlew :app:assembleDebug
+
+# Android unit tests
+./gradlew :app:testDebugUnitTest
+
+# Desktop app (run)
+./gradlew :desktop:run
+
+# Desktop installer
+./gradlew :desktop:packageDistributionForCurrentOS
+```
 
 ---
 
