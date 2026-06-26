@@ -3,6 +3,7 @@ package com.example.ui.screens
 import android.widget.Toast
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -53,6 +54,8 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.ChatBubble
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -70,6 +73,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -131,6 +135,10 @@ fun BlogDetailScreen(
 
     var ratingInput by remember { mutableStateOf(5) }
     var reviewTextInput by remember { mutableStateOf("") }
+    var showAuthorDialog by remember { mutableStateOf(false) }
+
+    val wordCount = activeBlog.content.split(Regex("\\s+")).filter { it.isNotBlank() }.size
+    val calculatedReadTime = maxOf(1, (wordCount + 199) / 200)
 
     // Filter related recommendations from same state or category
     val relatedBlogs = allPublishedBlogs.filter {
@@ -391,7 +399,14 @@ fun BlogDetailScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Author detail
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { showAuthorDialog = true }
+                                .padding(4.dp)
+                                .testTag("blog_author_clickable")
+                        ) {
                             Box(
                                 modifier = Modifier
                                     .size(36.dp)
@@ -438,19 +453,23 @@ fun BlogDetailScreen(
                                 )
                             }
                             Spacer(modifier = Modifier.height(4.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.testTag("reading_time_row")
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.Timer,
-                                    contentDescription = null,
+                                    contentDescription = "Estimated Reading Time",
                                     tint = SaffronPrimary,
                                     modifier = Modifier.size(14.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = "${activeBlog.readTimeMin} min read",
+                                    text = "$calculatedReadTime min read ($wordCount words)",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = SaffronPrimary,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.testTag("estimated_reading_time")
                                 )
                             }
                         }
@@ -665,18 +684,21 @@ fun BlogDetailScreen(
             }
         }
 
-        // 6. Related Stories Recommendations
+        // 6. Related Articles Recommendations
         if (relatedBlogs.isNotEmpty()) {
             item {
                 Column(modifier = Modifier.padding(vertical = 16.dp)) {
                     Text(
-                        text = "Related Stories",
+                        text = "Related Articles",
                         style = MaterialTheme.typography.titleLarge,
                         color = AshokaNavy,
-                        modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 12.dp)
+                        modifier = Modifier
+                            .padding(start = 24.dp, end = 24.dp, bottom = 12.dp)
+                            .testTag("related_articles_title")
                     )
 
                     LazyRow(
+                        modifier = Modifier.testTag("related_articles_carousel"),
                         contentPadding = PaddingValues(horizontal = 24.dp),
                         horizontalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
@@ -684,7 +706,8 @@ fun BlogDetailScreen(
                             Card(
                                 modifier = Modifier
                                     .width(220.dp)
-                                    .clickable { onNavigateToBlog(rBlog.id) },
+                                    .clickable { onNavigateToBlog(rBlog.id) }
+                                    .testTag("related_article_card_${rBlog.id}"),
                                 shape = RoundedCornerShape(16.dp),
                                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -896,6 +919,160 @@ fun BlogDetailScreen(
             color = SaffronPrimary,
             trackColor = Color.Transparent
         )
+
+        // Author Biography Dialog
+        if (showAuthorDialog) {
+            val authorBlogsCount = allPublishedBlogs.count { it.authorName == activeBlog.authorName }
+            val authorBios = mapOf(
+                "Arjun Mehta" to "Arjun is a cultural historian and travel photographer based in Varanasi. He has spent over a decade documenting India's ancient festivals, temples, and spiritual heritage.",
+                "Ananya Sharma" to "Ananya is a culinary anthropologist and travel journalist. She loves exploring local spice markets, interviewing traditional chefs, and unearthing forgotten recipes from across India.",
+                "Vikram Singh" to "Vikram is an avid trekker, wildlife enthusiast, and adventure travel blogger. From the high-altitude passes of Ladakh to the tropical rainforests of Kerala, he is always on the hunt for the next thrill.",
+                "Priya Nair" to "Priya is an architect and heritage conservationist. She specializes in writing about ancient Indian rock-cut temples, Mughal forts, and Dravidian temple architecture.",
+                "Rohan Gupta" to "Rohan is an eco-travel advocate and digital nomad. He focuses on sustainable travel practices, community-based homestays, and highlighting off-the-beaten-path villages."
+            )
+            val bio = authorBios[activeBlog.authorName] ?: "${activeBlog.authorName} is a passionate travel storyteller, dedicated to uncovering the unique cultures, stunning destinations, and culinary arts of Incredible India."
+
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { showAuthorDialog = false },
+                modifier = Modifier.testTag("author_bio_dialog"),
+                shape = RoundedCornerShape(24.dp),
+                containerColor = MaterialTheme.colorScheme.surface,
+                tonalElevation = 6.dp,
+                title = null,
+                text = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // 1. Large Profile Circular Picture/Initial
+                        Box(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .background(SaffronPrimary.copy(alpha = 0.15f), CircleShape)
+                                .border(BorderStroke(2.dp, SaffronPrimary), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = activeBlog.authorName.firstOrNull()?.toString() ?: "I",
+                                style = MaterialTheme.typography.displaySmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = SaffronPrimary
+                                )
+                            )
+                        }
+
+                        // 2. Author Name & Role
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = activeBlog.authorName,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AshokaNavy,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.testTag("author_dialog_name")
+                                )
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Verified Writer",
+                                    tint = IndiaGreen,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Text(
+                                text = "Incredible India Contributor",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.Gray,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+
+                        // 3. Stats Section
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // Stat 1: Total Blogs Count
+                            Card(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .testTag("author_stat_blogs_count"),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(12.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = "$authorBlogsCount",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = AshokaNavy
+                                    )
+                                    Text(
+                                        text = "Articles",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color.Gray
+                                    )
+                                }
+                            }
+
+                            // Stat 2: Rating/Level
+                            Card(
+                                modifier = Modifier.weight(1f),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(12.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = "Level 5",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = SaffronPrimary
+                                    )
+                                    Text(
+                                        text = "Explorer Status",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color.Gray
+                                    )
+                                }
+                            }
+                        }
+
+                        // 4. Author Biography
+                        Text(
+                            text = bio,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            lineHeight = 20.sp,
+                            modifier = Modifier
+                                .padding(horizontal = 8.dp)
+                                .testTag("author_dialog_bio")
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = { showAuthorDialog = false },
+                        colors = ButtonDefaults.textButtonColors(contentColor = SaffronPrimary),
+                        modifier = Modifier.testTag("author_dialog_close")
+                    ) {
+                        Text("Close", fontWeight = FontWeight.Bold)
+                    }
+                }
+            )
+        }
     }
 }
 

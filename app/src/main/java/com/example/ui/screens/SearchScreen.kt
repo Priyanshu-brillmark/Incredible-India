@@ -69,6 +69,7 @@ fun SearchScreen(
     val categories by viewModel.categories.collectAsState()
     val states by viewModel.states.collectAsState()
     val filteredBlogs by viewModel.filteredPublishedBlogs.collectAsState()
+    val recentSearches by viewModel.recentSearches.collectAsState()
 
     LazyColumn(
         modifier = Modifier
@@ -133,6 +134,66 @@ fun SearchScreen(
                     ),
                     singleLine = true
                 )
+
+                if (recentSearches.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Recent Searches",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = AshokaNavy
+                        )
+                        Text(
+                            text = "Clear All",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = SaffronPrimary,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .clickable { viewModel.clearRecentSearches() }
+                                .padding(4.dp)
+                                .testTag("clear_recent_searches_btn")
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth().testTag("recent_searches_row")
+                    ) {
+                        items(recentSearches) { term ->
+                            Row(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                    .clickable { 
+                                        viewModel.setSearchQuery(term)
+                                        viewModel.addRecentSearch(term)
+                                    }
+                                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = term,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Remove search term",
+                                    tint = Color.Gray,
+                                    modifier = Modifier
+                                        .size(14.dp)
+                                        .clickable { viewModel.removeRecentSearch(term) }
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -265,7 +326,15 @@ fun SearchScreen(
             }
         } else {
             items(filteredBlogs) { blog ->
-                RecentBlogRowItem(blog = blog, onClick = { onNavigateToBlog(blog.id) })
+                RecentBlogRowItem(
+                    blog = blog,
+                    onClick = {
+                        if (query.isNotBlank()) {
+                            viewModel.addRecentSearch(query)
+                        }
+                        onNavigateToBlog(blog.id)
+                    }
+                )
             }
         }
     }

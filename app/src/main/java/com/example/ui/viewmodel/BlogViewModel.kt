@@ -35,12 +35,58 @@ data class TravelNotification(
 
 class BlogViewModel(private val repository: BlogRepository, private val application: Application) : ViewModel() {
 
+    // --- Recent Searches ---
+    private val _recentSearches = MutableStateFlow<List<String>>(emptyList())
+    val recentSearches = _recentSearches.asStateFlow()
+
+    fun addRecentSearch(query: String) {
+        val trimmed = query.trim()
+        if (trimmed.isBlank()) return
+        val currentList = _recentSearches.value.toMutableList()
+        currentList.remove(trimmed)
+        currentList.add(0, trimmed)
+        val updatedList = currentList.take(8)
+        _recentSearches.value = updatedList
+        
+        val sharedPrefs = application.getSharedPreferences("incredible_india_prefs", Context.MODE_PRIVATE)
+        val savedString = updatedList.joinToString("|||")
+        sharedPrefs.edit().putString("recent_searches_list", savedString).apply()
+    }
+
+    fun removeRecentSearch(query: String) {
+        val currentList = _recentSearches.value.toMutableList()
+        currentList.remove(query)
+        _recentSearches.value = currentList
+        
+        val sharedPrefs = application.getSharedPreferences("incredible_india_prefs", Context.MODE_PRIVATE)
+        val savedString = currentList.joinToString("|||")
+        sharedPrefs.edit().putString("recent_searches_list", savedString).apply()
+    }
+
+    fun clearRecentSearches() {
+        _recentSearches.value = emptyList()
+        val sharedPrefs = application.getSharedPreferences("incredible_india_prefs", Context.MODE_PRIVATE)
+        sharedPrefs.edit().remove("recent_searches_list").apply()
+    }
+
+    private fun loadRecentSearches() {
+        val sharedPrefs = application.getSharedPreferences("incredible_india_prefs", Context.MODE_PRIVATE)
+        val savedString = sharedPrefs.getString("recent_searches_list", "") ?: ""
+        if (savedString.isNotBlank()) {
+            _recentSearches.value = savedString.split("|||").filter { it.isNotBlank() }
+        }
+    }
+
     // --- Newsletter Subscription (Mock Backend) ---
     private val _newsletterSubscribed = MutableStateFlow(false)
     val newsletterSubscribed = _newsletterSubscribed.asStateFlow()
 
     private val _isSubscribing = MutableStateFlow(false)
     val isSubscribing = _isSubscribing.asStateFlow()
+
+    // --- Blogs Loading State ---
+    private val _isBlogsLoading = MutableStateFlow(true)
+    val isBlogsLoading = _isBlogsLoading.asStateFlow()
 
     fun subscribeToNewsletter(email: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
@@ -117,6 +163,11 @@ class BlogViewModel(private val repository: BlogRepository, private val applicat
     // --- Initializer ---
     init {
         loadSampleNotifications()
+        loadRecentSearches()
+        viewModelScope.launch {
+            delay(1500)
+            _isBlogsLoading.value = false
+        }
     }
 
     private fun loadSampleNotifications() {

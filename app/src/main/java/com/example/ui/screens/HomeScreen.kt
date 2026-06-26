@@ -64,6 +64,13 @@ import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -107,6 +114,7 @@ fun HomeScreen(
     val categories by viewModel.categories.collectAsState()
     val states by viewModel.states.collectAsState()
     val notifications by viewModel.notifications.collectAsState()
+    val isBlogsLoading by viewModel.isBlogsLoading.collectAsState()
 
     val featuredBlogs = blogs.filter { it.isFeatured }
     val trendingBlogs = blogs.filter { it.isTrending }.sortedByDescending { it.viewCount }
@@ -306,7 +314,136 @@ fun HomeScreen(
         }
 
         // 4. Featured Hero Bento Card
-        if (featuredBlogs.isNotEmpty()) {
+        if (isBlogsLoading) {
+            item {
+                val brush = shimmerBrush()
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp)
+                        .testTag("home_skeleton_loader")
+                ) {
+                    // 1. Shimmer Header
+                    Text(
+                        text = "Featured Journey",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = AshokaNavy,
+                        modifier = Modifier.padding(start = 24.dp, bottom = 12.dp)
+                    )
+
+                    // 2. Large Shimmer Bento Card
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp)
+                            .height(260.dp)
+                            .clip(RoundedCornerShape(24.dp))
+                            .background(brush)
+                            .testTag("skeleton_hero_card")
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // 3. Shimmer Row of Remaining Featured Items
+                    Text(
+                        text = "Curated Discoveries",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = AshokaNavy,
+                        modifier = Modifier.padding(start = 24.dp, bottom = 12.dp)
+                    )
+
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 24.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(3) { index ->
+                            Box(
+                                modifier = Modifier
+                                    .width(220.dp)
+                                    .height(110.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(brush)
+                                    .testTag("skeleton_curated_card_$index")
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // 4. Shimmer Asymmetric Bento Row
+                    Text(
+                        text = "Explore Categories",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = AshokaNavy,
+                        modifier = Modifier.padding(start = 24.dp, bottom = 12.dp)
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1.1f)
+                                .height(240.dp)
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(brush)
+                                .testTag("skeleton_asymmetric_left")
+                        )
+                        Box(
+                            modifier = Modifier
+                                .weight(0.9f)
+                                .height(240.dp)
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(brush)
+                                .testTag("skeleton_asymmetric_right")
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // 5. Shimmer Trending Now Row
+                    Text(
+                        text = "Trending Now",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = AshokaNavy,
+                        modifier = Modifier.padding(start = 24.dp, bottom = 12.dp)
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(180.dp)
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(brush)
+                                .testTag("skeleton_trending_left")
+                        )
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(180.dp)
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(brush)
+                                .testTag("skeleton_trending_right")
+                        )
+                    }
+                }
+            }
+        } else {
+            if (featuredBlogs.isNotEmpty()) {
             item {
                 Column(modifier = Modifier.padding(vertical = 12.dp)) {
                     Text(
@@ -791,6 +928,7 @@ fun HomeScreen(
         // 9. Newsletter Subscription Footer Card
         item {
             NewsletterFooter(viewModel = viewModel)
+        }
         }
     }
 }
@@ -1341,5 +1479,43 @@ fun NewsletterFooter(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun shimmerBrush(
+    showShimmer: Boolean = true,
+    targetValue: Float = 1000f
+): Brush {
+    return if (showShimmer) {
+        val transition = rememberInfiniteTransition(label = "shimmer")
+        val translateAnimation by transition.animateFloat(
+            initialValue = 0f,
+            targetValue = targetValue,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = 1200,
+                    easing = LinearEasing
+                ),
+                repeatMode = RepeatMode.Restart
+            ),
+            label = "shimmer_anim"
+        )
+        
+        Brush.linearGradient(
+            colors = listOf(
+                Color.LightGray.copy(alpha = 0.6f),
+                Color.LightGray.copy(alpha = 0.2f),
+                Color.LightGray.copy(alpha = 0.6f),
+            ),
+            start = Offset.Zero,
+            end = Offset(x = translateAnimation, y = translateAnimation)
+        )
+    } else {
+        Brush.linearGradient(
+            colors = listOf(Color.Transparent, Color.Transparent),
+            start = Offset.Zero,
+            end = Offset.Zero
+        )
     }
 }
