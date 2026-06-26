@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Outer Compass Ring -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M 54 22 A 32 32 0 1 1 53.99 22 Z" />
+
+    <!-- Inner Dash Ring -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF9933"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M 54 28 A 26 26 0 1 1 53.99 28 Z" />
+
+    <!-- North Arrow (Saffron Accent) -->
+    <path
+        android:fillColor="#FF9933"
+        android:pathData="M 54 26 L 59 54 L 54 48 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M 54 26 L 49 54 L 54 48 Z" />
+
+    <!-- South Arrow -->
+    <path
+        android:fillColor="#D1D8E0"
+        android:pathData="M 54 82 L 49 54 L 54 60 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M 54 82 L 59 54 L 54 60 Z" />
+
+    <!-- East Arrow -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M 82 54 L 54 49 L 60 54 Z" />
+    <path
+        android:fillColor="#D1D8E0"
+        android:pathData="M 82 54 L 54 59 L 60 54 Z" />
+
+    <!-- West Arrow -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M 26 54 L 54 59 L 48 54 Z" />
+    <path
+        android:fillColor="#D1D8E0"
+        android:pathData="M 26 54 L 54 49 L 48 54 Z" />
+
+    <!-- Center Hub Dot -->
+    <path
+        android:fillColor="#0A2240"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
+        android:pathData="M 54 50 A 4 4 0 1 1 53.99 50 Z" />
+
+</vector>

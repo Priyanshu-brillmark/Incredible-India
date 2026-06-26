@@ -1,0 +1,6 @@
+{
+  "name": "Incredible India Blogs",
+  "description": "A premium tourism blogging application and admin dashboard showcasing the diverse culture, heritage, food, festivals, and destinations of India.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
