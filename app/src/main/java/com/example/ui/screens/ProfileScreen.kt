@@ -80,7 +80,6 @@ fun ProfileScreen(
     val bookmarkedBlogs by viewModel.bookmarkedBlogs.collectAsState()
     val allBlogs by viewModel.publishedBlogs.collectAsState()
     val downloadedBlogs by viewModel.downloadedBlogs.collectAsState()
-    val currentTheme by viewModel.themePreference.collectAsState()
 
     var areNotifsEnabled by remember { mutableStateOf(true) }
 
@@ -237,51 +236,10 @@ fun ProfileScreen(
                     .padding(horizontal = 24.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                border = BorderStroke(1.dp, if (isSystemInDarkTheme()) BentoDarkBorderColor else BentoBorderColor),
+                border = BorderStroke(1.dp, BentoBorderColor),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Column {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(imageVector = Icons.Default.ColorLens, contentDescription = null, tint = AshokaNavy, modifier = Modifier.size(24.dp))
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Text(text = "App Theme", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = AshokaNavy)
-                        }
-                        
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                                .padding(2.dp)
-                        ) {
-                            val themes = listOf("light" to "Light", "dark" to "Dark", "system" to "System")
-                            themes.forEach { (key, label) ->
-                                val isSelected = currentTheme == key
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(if (isSelected) SaffronPrimary else Color.Transparent)
-                                        .clickable { viewModel.setThemePreference(key) }
-                                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                                        .testTag("theme_option_$key")
-                                ) {
-                                    Text(
-                                        text = label,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    Divider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
                     SettingsToggleRow(
                         icon = Icons.Default.Notifications,
                         title = "Push Notifications",

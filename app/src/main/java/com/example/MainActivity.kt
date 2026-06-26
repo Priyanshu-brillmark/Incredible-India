@@ -58,14 +58,7 @@ class MainActivity : ComponentActivity() {
                 factory = BlogViewModelFactory(repository, application)
             )
 
-            val themePref by viewModel.themePreference.collectAsState()
-            val isDark = when (themePref) {
-                "light" -> false
-                "dark" -> true
-                else -> isSystemInDarkTheme()
-            }
-
-            MyApplicationTheme(darkTheme = isDark) {
+            MyApplicationTheme {
                 MainAppShell(viewModel)
             }
         }

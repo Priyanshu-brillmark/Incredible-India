@@ -42,6 +42,9 @@ import androidx.compose.material.icons.outlined.Bookmark
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -51,6 +54,13 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -777,6 +787,11 @@ fun HomeScreen(
                 RecentBlogRowItem(blog = blog, onClick = { onNavigateToBlog(blog.id) })
             }
         }
+
+        // 9. Newsletter Subscription Footer Card
+        item {
+            NewsletterFooter(viewModel = viewModel)
+        }
     }
 }
 
@@ -1194,5 +1209,137 @@ fun getCategoryIcon(name: String): ImageVector {
         "shopping_bag", "shopping" -> Icons.Default.ShoppingBag
         "groups", "local experiences" -> Icons.Default.Groups
         else -> Icons.Default.Explore
+    }
+}
+
+@Composable
+fun NewsletterFooter(
+    viewModel: BlogViewModel
+) {
+    val context = LocalContext.current
+    val isSubscribed by viewModel.newsletterSubscribed.collectAsState()
+    val isSubscribing by viewModel.isSubscribing.collectAsState()
+    var emailInput by remember { mutableStateOf("") }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(24.dp)
+            .testTag("newsletter_footer_card"),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
+        border = BorderStroke(1.dp, BentoBorderColor)
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Email,
+                contentDescription = null,
+                tint = SaffronPrimary,
+                modifier = Modifier.size(40.dp)
+            )
+
+            Text(
+                text = "Subscribe to Newsletter",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = AshokaNavy,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = "Receive weekly highlights of Indian travel stories, heritage discoveries, and hidden gems directly in your inbox.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                lineHeight = 20.sp
+            )
+
+            if (isSubscribed) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(IndiaGreen.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                        .padding(14.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "Success",
+                        tint = IndiaGreen,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Text(
+                        text = "You are successfully subscribed! Welcome to the weekly highlight circle.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = IndiaGreen,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            } else {
+                OutlinedTextField(
+                    value = emailInput,
+                    onValueChange = { emailInput = it },
+                    placeholder = { Text("Enter your email address") },
+                    leadingIcon = {
+                        Icon(imageVector = Icons.Default.Email, contentDescription = null, tint = Color.Gray)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("newsletter_email_input"),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = SaffronPrimary,
+                        unfocusedBorderColor = BentoBorderColor
+                    )
+                )
+
+                Button(
+                    onClick = {
+                        if (emailInput.isBlank()) {
+                            Toast.makeText(context, "Please enter an email address", Toast.LENGTH_SHORT).show()
+                        } else {
+                            viewModel.subscribeToNewsletter(
+                                email = emailInput,
+                                onSuccess = {
+                                    emailInput = ""
+                                    Toast.makeText(context, "Subscription successful!", Toast.LENGTH_SHORT).show()
+                                },
+                                onError = { error ->
+                                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .testTag("newsletter_subscribe_button"),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = SaffronPrimary),
+                    enabled = !isSubscribing
+                ) {
+                    if (isSubscribing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            text = "Subscribe Now",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+        }
     }
 }

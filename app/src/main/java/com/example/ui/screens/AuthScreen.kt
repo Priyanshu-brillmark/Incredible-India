@@ -81,14 +81,7 @@ fun AuthScreen(
     var showPassword by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    // Prepopulate admin credentials when on admin tab for rapid testing
-    if (selectedTab == 2 && username.isBlank() && password.isBlank()) {
-        username = "admin"
-        password = "admin123"
-    } else if (selectedTab != 2 && username == "admin") {
-        username = ""
-        password = ""
-    }
+
 
     Box(
         modifier = Modifier
@@ -304,36 +297,7 @@ fun AuthScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Informational Callout for Admin tab
-                    if (selectedTab == 2) {
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 16.dp),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Info,
-                                    contentDescription = null,
-                                    tint = AshokaNavy,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "To test the admin features, use the pre-populated credentials:\nUser: admin / Pass: admin123",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
-                            }
-                        }
-                    }
+
 
                     // Primary Submit Button
                     val buttonColor = when (selectedTab) {

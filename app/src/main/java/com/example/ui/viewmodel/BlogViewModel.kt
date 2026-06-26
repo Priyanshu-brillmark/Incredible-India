@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 data class UserSession(
     val username: String,
@@ -34,9 +35,26 @@ data class TravelNotification(
 
 class BlogViewModel(private val repository: BlogRepository, private val application: Application) : ViewModel() {
 
-    // --- Theme Switching ---
-    private val _themePreference = MutableStateFlow("system")
-    val themePreference = _themePreference.asStateFlow()
+    // --- Newsletter Subscription (Mock Backend) ---
+    private val _newsletterSubscribed = MutableStateFlow(false)
+    val newsletterSubscribed = _newsletterSubscribed.asStateFlow()
+
+    private val _isSubscribing = MutableStateFlow(false)
+    val isSubscribing = _isSubscribing.asStateFlow()
+
+    fun subscribeToNewsletter(email: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            onError("Please enter a valid email address.")
+            return
+        }
+        viewModelScope.launch {
+            _isSubscribing.value = true
+            delay(1500) // Mock API network call latency
+            _newsletterSubscribed.value = true
+            _isSubscribing.value = false
+            onSuccess()
+        }
+    }
 
     // --- Flows from Room DB ---
     val allBlogs: StateFlow<List<BlogEntity>> = repository.allBlogs
@@ -99,18 +117,6 @@ class BlogViewModel(private val repository: BlogRepository, private val applicat
     // --- Initializer ---
     init {
         loadSampleNotifications()
-        loadThemePreference()
-    }
-
-    private fun loadThemePreference() {
-        val sharedPrefs = application.getSharedPreferences("incredible_india_prefs", Context.MODE_PRIVATE)
-        _themePreference.value = sharedPrefs.getString("app_theme", "system") ?: "system"
-    }
-
-    fun setThemePreference(theme: String) {
-        _themePreference.value = theme
-        val sharedPrefs = application.getSharedPreferences("incredible_india_prefs", Context.MODE_PRIVATE)
-        sharedPrefs.edit().putString("app_theme", theme).apply()
     }
 
     private fun loadSampleNotifications() {

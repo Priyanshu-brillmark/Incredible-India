@@ -44,6 +44,15 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.foundation.layout.statusBarsPadding
+import android.content.Context
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -128,13 +137,40 @@ fun BlogDetailScreen(
         (it.category == activeBlog.category || it.stateName == activeBlog.stateName) && it.id != activeBlog.id
     }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .testTag("blog_detail_root"),
-        contentPadding = PaddingValues(bottom = 80.dp)
-    ) {
+    val listState = rememberLazyListState()
+    val scrollProgress by remember {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            val visibleItemsInfo = layoutInfo.visibleItemsInfo
+            if (visibleItemsInfo.isEmpty()) {
+                0f
+            } else {
+                val firstItem = visibleItemsInfo.first()
+                val totalItems = layoutInfo.totalItemsCount
+                val lastItem = visibleItemsInfo.last()
+                
+                val totalHeight = (totalItems - 1) * 100f
+                val currentScroll = firstItem.index * 100f + (-firstItem.offset.toFloat() / firstItem.size * 100f)
+                
+                val progress = if (lastItem.index == totalItems - 1 && lastItem.offset + lastItem.size <= layoutInfo.viewportEndOffset) {
+                    1f
+                } else {
+                    currentScroll / totalHeight.coerceAtLeast(1f)
+                }
+                progress.coerceIn(0f, 1f)
+            }
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .testTag("blog_detail_root"),
+            contentPadding = PaddingValues(bottom = 80.dp)
+        ) {
         // 1. Full-bleed Hero Image with curved bottom & floating overlays
         item {
             Box(
@@ -542,6 +578,93 @@ fun BlogDetailScreen(
             }
         }
 
+        // 5.5 Social Sharing Component
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 12.dp)
+                    .testTag("social_sharing_card"),
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.dp, BentoBorderColor),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Spread the Wanderlust",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = AshokaNavy
+                    )
+                    Text(
+                        text = "Share this wonderful destination with your friends and family!",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // 1. Copy Link Action
+                        IconButtonWithLabel(
+                            icon = Icons.Default.ContentCopy,
+                            label = "Copy Link",
+                            backgroundColor = SaffronPrimary.copy(alpha = 0.1f),
+                            iconColor = SaffronPrimary,
+                            onClick = {
+                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                val clip = android.content.ClipData.newPlainText("Incredible India Travel Blog", "https://incredibleindia.gov.in/blogs/${activeBlog.id}")
+                                clipboard.setPrimaryClip(clip)
+                                Toast.makeText(context, "Link copied to clipboard!", Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.testTag("share_copy_link")
+                        )
+
+                        // 2. WhatsApp Mock
+                        IconButtonWithLabel(
+                            icon = Icons.Default.ChatBubble,
+                            label = "WhatsApp",
+                            backgroundColor = IndiaGreen.copy(alpha = 0.1f),
+                            iconColor = IndiaGreen,
+                            onClick = {
+                                Toast.makeText(context, "Sharing story via WhatsApp...", Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.testTag("share_whatsapp")
+                        )
+
+                        // 3. Twitter/X Mock
+                        IconButtonWithLabel(
+                            icon = Icons.Default.Public,
+                            label = "Twitter/X",
+                            backgroundColor = Color.Black.copy(alpha = 0.05f),
+                            iconColor = Color.Black,
+                            onClick = {
+                                Toast.makeText(context, "Opening Twitter/X to share story...", Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.testTag("share_twitter")
+                        )
+
+                        // 4. Facebook Mock
+                        IconButtonWithLabel(
+                            icon = Icons.Default.Send,
+                            label = "Direct Share",
+                            backgroundColor = AshokaNavy.copy(alpha = 0.1f),
+                            iconColor = AshokaNavy,
+                            onClick = {
+                                Toast.makeText(context, "Opening share menu...", Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.testTag("share_facebook")
+                        )
+                    }
+                }
+            }
+        }
+
         // 6. Related Stories Recommendations
         if (relatedBlogs.isNotEmpty()) {
             item {
@@ -758,10 +881,64 @@ fun BlogDetailScreen(
                 }
             }
         }
+
+        }
+
+        // Visual scroll progress indicator bar at the top
+        LinearProgressIndicator(
+            progress = scrollProgress,
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .height(4.dp)
+                .align(Alignment.TopCenter)
+                .testTag("scroll_progress_bar"),
+            color = SaffronPrimary,
+            trackColor = Color.Transparent
+        )
     }
 }
 
 private fun formatDate(timestamp: Long): String {
     val sdf = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
     return sdf.format(Date(timestamp))
+}
+
+@Composable
+fun IconButtonWithLabel(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    backgroundColor: Color,
+    iconColor: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onClick() }
+            .padding(8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .background(backgroundColor, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = iconColor,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
 }
