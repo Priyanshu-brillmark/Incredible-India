@@ -2,7 +2,7 @@
 
 Incredible India Blogs is a premium, visually stunning travel and culture blogging platform designed to showcase the rich heritage, diverse cuisines, spectacular festivals, and hidden gems of India. 
 
-The application is built using modern Android development practices, powered by **Kotlin**, **Jetpack Compose**, **Material Design 3 (Bento Grid layout patterns)**, and a local **Room database** for seamless offline capability.
+The application is built using modern Kotlin and Compose, with **Android** (Jetpack Compose + Room) and **Desktop** (Compose Desktop) targets sharing a common data layer.
 
 ---
 
@@ -78,7 +78,7 @@ The application is built using modern Android development practices, powered by 
    ```bash
    ./gradlew :desktop:packageDistributionForCurrentOS
    ```
-   Installers are generated under `desktop/build/compose/binaries/main-release/`.
+   Installers are generated under `desktop/build/compose/binaries/main/`.
 
 ---
 
